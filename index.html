@@ -19,20 +19,41 @@ body{
   min-height:100vh;
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
   color:white;
-  display:grid;
-  place-items:center;
   background:
     radial-gradient(circle at 15% 20%, var(--bg2), transparent 40%),
     radial-gradient(circle at 80% 30%, var(--bg3), transparent 45%),
     radial-gradient(circle at 30% 85%, var(--bg4), transparent 45%),
     linear-gradient(135deg, var(--bg1), #7b2cbf);
+  overflow-x:hidden;
 }
 
-.wrap{ text-align:center; }
+/* ===== ROTATE HINT ===== */
+#rotateHint{
+  position:fixed;
+  inset:0;
+  background: rgba(10,10,20,.92);
+  color:white;
+  display:none;
+  place-items:center;
+  text-align:center;
+  font-size:28px;
+  z-index:10000;
+}
+
+/* ===== START ===== */
+.wrap{
+  min-height:100vh;
+  display:grid;
+  place-items:center;
+  text-align:center;
+  padding:48px 16px;
+  transition:padding .25s ease, place-items .25s ease;
+}
 h1{
   font-size:clamp(36px,6vw,72px);
   margin:0 0 24px;
   letter-spacing:.05em;
+  transition:margin .25s ease;
 }
 button{
   border:0;
@@ -41,9 +62,20 @@ button{
   font-weight:700;
   border-radius:999px;
   cursor:pointer;
+  transition:opacity .2s ease;
 }
 
-/* Overlay */
+/* After start */
+body.started .wrap{
+  place-items:start center;
+  padding-top:18px;
+}
+body.started #startBtn{
+  opacity:0;
+  pointer-events:none;
+}
+
+/* ===== SCENE ===== */
 .modal{
   position:fixed;
   inset:0;
@@ -52,7 +84,6 @@ button{
 }
 .modal.open{ display:grid; }
 
-/* Scene */
 .scene{
   position:relative;
   width:100vw;
@@ -61,13 +92,13 @@ button{
   background: linear-gradient(180deg, rgba(78,168,222,.35), rgba(123,44,191,.2));
 }
 
-/* LAYERS (wichtig!) */
+/* layers */
 .road{ z-index:1; }
 .wall{ z-index:2; }
-.car{ z-index:3; }        /* Auto über der Straße */
-.crashFx{ z-index:4; }    /* Explosion ganz oben */
+.car{ z-index:3; }
+.crashFx{ z-index:4; }
 
-/* Road */
+/* road */
 .road{
   position:absolute;
   left:0; right:0; bottom:0;
@@ -87,7 +118,7 @@ button{
   opacity:.8;
 }
 
-/* Wall */
+/* wall */
 .wall{
   position:absolute;
   right:0;
@@ -99,21 +130,20 @@ button{
   font-size:46px;
 }
 
-/* Car */
+/* car */
 .car{
   position:absolute;
   bottom:38px;
   left:10%;
   font-size:46px;
   transform:translateX(-50%);
-  filter: drop-shadow(0 10px 10px rgba(0,0,0,0.35));
 }
 .carEmoji{
   display:inline-block;
   transform:scaleX(-1);
 }
 
-/* Drive (nur nach rechts, stoppt an der Mauer) */
+/* drive */
 .drive .car{
   animation: driveToWall 2.7s ease-in forwards;
 }
@@ -123,7 +153,7 @@ button{
   100%{ left:86%; }
 }
 
-/* Crash */
+/* crash */
 .crashFx{
   position:absolute;
   right:92px;
@@ -143,18 +173,50 @@ button{
   transform:scaleX(-1) rotate(12deg);
 }
 
-/* Gift */
+/* gift */
 .gift{
   text-align:center;
-  margin-top:24px;
+  margin:24px 16px 0;
   font-size:22px;
   display:none;
 }
 .gift.show{ display:block; }
+
+/* ===== CONFETTI ===== */
+#confetti{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  overflow:hidden;
+  display:none;
+  z-index:9999;
+}
+#confetti.on{ display:block; }
+
+.confetti-piece{
+  position:absolute;
+  top:-14px;
+  width:10px;
+  height:14px;
+  border-radius:2px;
+  animation: confettiFall linear forwards;
+}
+
+@keyframes confettiFall{
+  to{
+    transform: translate3d(var(--drift), 110vh, 0) rotate(var(--spin));
+  }
+}
 </style>
 </head>
 
 <body>
+
+<div id="rotateHint">
+  📱🔄<br>Bitte drehe dein iPhone<br><small>(Querformat)</small>
+</div>
+
+<div id="confetti"></div>
 
 <div class="wrap">
   <h1>HAPPY BIRTHDAY FRANCIS</h1>
@@ -182,8 +244,53 @@ const startBtn = document.getElementById("startBtn");
 const modal = document.getElementById("modal");
 const scene = document.getElementById("scene");
 const gift = document.getElementById("giftText");
+const rotateHint = document.getElementById("rotateHint");
+const confetti = document.getElementById("confetti");
+
+let confettiInterval = null;
+
+function isIPhone(){
+  return /iPhone/i.test(navigator.userAgent);
+}
+function checkOrientation(){
+  if(isIPhone() && innerHeight > innerWidth){
+    rotateHint.style.display="grid";
+    startBtn.disabled=true;
+    startBtn.style.opacity=".5";
+  }else{
+    rotateHint.style.display="none";
+    startBtn.disabled=false;
+    startBtn.style.opacity="1";
+  }
+}
+
+function spawnConfetti(){
+  const colors=["#ff4d6d","#ffd166","#06d6a0","#4ea8de","#fff","#f72585"];
+  for(let i=0;i<12;i++){
+    const p=document.createElement("div");
+    p.className="confetti-piece";
+    const size=6+Math.random()*8;
+    p.style.width=size+"px";
+    p.style.height=size*1.2+"px";
+    p.style.left=Math.random()*100+"vw";
+    p.style.background=colors[Math.floor(Math.random()*colors.length)];
+    p.style.animationDuration=(2000+Math.random()*2000)+"ms";
+    p.style.setProperty("--drift",(Math.random()*200-100)+"px");
+    p.style.setProperty("--spin",(Math.random()*720-360)+"deg");
+    confetti.appendChild(p);
+    setTimeout(()=>p.remove(),4200);
+  }
+}
+
+function startConfetti(){
+  if(confettiInterval) return;
+  confetti.classList.add("on");
+  spawnConfetti();
+  confettiInterval=setInterval(spawnConfetti,500);
+}
 
 function play(){
+  document.body.classList.add("started");
   scene.classList.remove("drive","crashed");
   gift.classList.remove("show");
   void scene.offsetWidth;
@@ -191,11 +298,17 @@ function play(){
   modal.classList.add("open");
   scene.classList.add("drive");
 
-  setTimeout(()=>scene.classList.add("crashed"), 2550);
-  setTimeout(()=>gift.classList.add("show"), 2900);
+  setTimeout(()=>scene.classList.add("crashed"),2550);
+  setTimeout(()=>{
+    gift.classList.add("show");
+    startConfetti();
+  },2900);
 }
 
-startBtn.addEventListener("click", play);
+startBtn.addEventListener("click",play);
+addEventListener("resize",checkOrientation);
+addEventListener("orientationchange",checkOrientation);
+checkOrientation();
 </script>
 
 </body>
