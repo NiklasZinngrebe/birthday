@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Happy Birthday Francis</title>
+
+<style>
+:root{
+  --bg1:#ff4d6d;
+  --bg2:#ffd166;
+  --bg3:#06d6a0;
+  --bg4:#4ea8de;
+}
+
+*{ box-sizing:border-box; }
+body{
+  margin:0;
+  min-height:100vh;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+  color:white;
+  display:grid;
+  place-items:center;
+  background:
+    radial-gradient(circle at 15% 20%, var(--bg2), transparent 40%),
+    radial-gradient(circle at 80% 30%, var(--bg3), transparent 45%),
+    radial-gradient(circle at 30% 85%, var(--bg4), transparent 45%),
+    linear-gradient(135deg, var(--bg1), #7b2cbf);
+}
+
+.wrap{ text-align:center; }
+h1{
+  font-size:clamp(36px,6vw,72px);
+  margin:0 0 24px;
+  letter-spacing:.05em;
+}
+button{
+  border:0;
+  padding:14px 28px;
+  font-size:18px;
+  font-weight:700;
+  border-radius:999px;
+  cursor:pointer;
+}
+
+/* Overlay */
+.modal{
+  position:fixed;
+  inset:0;
+  display:none;
+  place-items:center;
+}
+.modal.open{ display:grid; }
+
+/* Scene */
+.scene{
+  position:relative;
+  width:100vw;
+  height:260px;
+  overflow:hidden;
+  background: linear-gradient(180deg, rgba(78,168,222,.35), rgba(123,44,191,.2));
+}
+
+/* LAYERS (wichtig!) */
+.road{ z-index:1; }
+.wall{ z-index:2; }
+.car{ z-index:3; }        /* Auto über der Straße */
+.crashFx{ z-index:4; }    /* Explosion ganz oben */
+
+/* Road */
+.road{
+  position:absolute;
+  left:0; right:0; bottom:0;
+  height:95px;
+  background:#1e1e26;
+}
+.lane{
+  position:absolute;
+  top:45px;
+  left:0; right:0;
+  height:6px;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0 18px,
+    white 18px 36px
+  );
+  opacity:.8;
+}
+
+/* Wall */
+.wall{
+  position:absolute;
+  right:0;
+  bottom:0;
+  width:90px;
+  height:120px;
+  display:grid;
+  place-items:center;
+  font-size:46px;
+}
+
+/* Car */
+.car{
+  position:absolute;
+  bottom:38px;
+  left:10%;
+  font-size:46px;
+  transform:translateX(-50%);
+  filter: drop-shadow(0 10px 10px rgba(0,0,0,0.35));
+}
+.carEmoji{
+  display:inline-block;
+  transform:scaleX(-1);
+}
+
+/* Drive (nur nach rechts, stoppt an der Mauer) */
+.drive .car{
+  animation: driveToWall 2.7s ease-in forwards;
+}
+@keyframes driveToWall{
+  0%{ left:10%; }
+  85%{ left:82%; }
+  100%{ left:86%; }
+}
+
+/* Crash */
+.crashFx{
+  position:absolute;
+  right:92px;
+  bottom:58px;
+  font-size:36px;
+  opacity:0;
+}
+.crashed .crashFx{
+  animation: boom .6s ease-out forwards;
+}
+@keyframes boom{
+  0%{ opacity:0; transform:scale(.4); }
+  40%{ opacity:1; transform:scale(1.4); }
+  100%{ opacity:0; transform:scale(2); }
+}
+.crashed .carEmoji{
+  transform:scaleX(-1) rotate(12deg);
+}
+
+/* Gift */
+.gift{
+  text-align:center;
+  margin-top:24px;
+  font-size:22px;
+  display:none;
+}
+.gift.show{ display:block; }
+</style>
+</head>
+
+<body>
+
+<div class="wrap">
+  <h1>HAPPY BIRTHDAY FRANCIS</h1>
+  <button id="startBtn">CLICK ME</button>
+</div>
+
+<div class="modal" id="modal">
+  <div>
+    <div class="scene" id="scene">
+      <div class="car"><span class="carEmoji">🚗</span></div>
+      <div class="road"><div class="lane"></div></div>
+      <div class="wall">🧱</div>
+      <div class="crashFx">💥</div>
+    </div>
+
+    <div class="gift" id="giftText">
+      🎁 <strong>1× Gutschein</strong> für bald eine Stunde auf dem Verkehrsübungsplatz
+      und eine Fahrstunde
+    </div>
+  </div>
+</div>
+
+<script>
+const startBtn = document.getElementById("startBtn");
+const modal = document.getElementById("modal");
+const scene = document.getElementById("scene");
+const gift = document.getElementById("giftText");
+
+function play(){
+  scene.classList.remove("drive","crashed");
+  gift.classList.remove("show");
+  void scene.offsetWidth;
+
+  modal.classList.add("open");
+  scene.classList.add("drive");
+
+  setTimeout(()=>scene.classList.add("crashed"), 2550);
+  setTimeout(()=>gift.classList.add("show"), 2900);
+}
+
+startBtn.addEventListener("click", play);
+</script>
+
+</body>
+</html>
