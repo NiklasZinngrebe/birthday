@@ -19,49 +19,21 @@ body{
   min-height:100vh;
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
   color:white;
+  display:grid;
+  place-items:center;
   background:
     radial-gradient(circle at 15% 20%, var(--bg2), transparent 40%),
     radial-gradient(circle at 80% 30%, var(--bg3), transparent 45%),
     radial-gradient(circle at 30% 85%, var(--bg4), transparent 45%),
     linear-gradient(135deg, var(--bg1), #7b2cbf);
-  overflow-x:hidden;
 }
 
-/* ===== ROTATE HINT (iPhone Portrait) ===== */
-#rotateHint{
-  position:fixed;
-  inset:0;
-  background: rgba(10,10,20,.92);
-  color:white;
-  display:none;
-  place-items:center;
-  text-align:center;
-  font-size:28px;
-  z-index:10000;
-  padding:20px;
-}
-#rotateHint small{
-  font-size:18px;
-  opacity:.8;
-}
-
-/* ===== START LAYOUT ===== */
-.wrap{
-  min-height:100vh;
-  display:grid;
-  place-items:center;
-  text-align:center;
-  padding: 48px 16px;
-  transition: padding .25s ease, place-items .25s ease;
-}
-
+.wrap{ text-align:center; }
 h1{
   font-size:clamp(36px,6vw,72px);
   margin:0 0 24px;
   letter-spacing:.05em;
-  transition: transform .25s ease, margin .25s ease;
 }
-
 button{
   border:0;
   padding:14px 28px;
@@ -69,24 +41,9 @@ button{
   font-weight:700;
   border-radius:999px;
   cursor:pointer;
-  transition: opacity .2s ease, transform .2s ease;
 }
 
-/* When animation starts: move header up + hide button */
-body.started .wrap{
-  place-items:start center;
-  padding-top: 18px;
-}
-body.started h1{
-  margin-bottom: 12px;
-}
-body.started #startBtn{
-  opacity:0;
-  pointer-events:none;
-  transform: translateY(-6px);
-}
-
-/* ===== ANIMATION AREA ===== */
+/* Overlay */
 .modal{
   position:fixed;
   inset:0;
@@ -95,6 +52,7 @@ body.started #startBtn{
 }
 .modal.open{ display:grid; }
 
+/* Scene */
 .scene{
   position:relative;
   width:100vw;
@@ -103,11 +61,11 @@ body.started #startBtn{
   background: linear-gradient(180deg, rgba(78,168,222,.35), rgba(123,44,191,.2));
 }
 
-/* Layers */
+/* LAYERS (wichtig!) */
 .road{ z-index:1; }
 .wall{ z-index:2; }
-.car{ z-index:3; }
-.crashFx{ z-index:4; }
+.car{ z-index:3; }        /* Auto über der Straße */
+.crashFx{ z-index:4; }    /* Explosion ganz oben */
 
 /* Road */
 .road{
@@ -148,14 +106,14 @@ body.started #startBtn{
   left:10%;
   font-size:46px;
   transform:translateX(-50%);
-  filter: drop-shadow(0 10px 10px rgba(0,0,0,.35));
+  filter: drop-shadow(0 10px 10px rgba(0,0,0,0.35));
 }
 .carEmoji{
   display:inline-block;
   transform:scaleX(-1);
 }
 
-/* Drive: only to the wall and stop */
+/* Drive (nur nach rechts, stoppt an der Mauer) */
 .drive .car{
   animation: driveToWall 2.7s ease-in forwards;
 }
@@ -188,65 +146,19 @@ body.started #startBtn{
 /* Gift */
 .gift{
   text-align:center;
-  margin:24px 16px 0;
+  margin-top:24px;
   font-size:22px;
   display:none;
 }
 .gift.show{ display:block; }
-
-/* ===== CONFETTI ===== */
-#confetti{
-  position:fixed;
-  inset:0;
-  pointer-events:none;
-  overflow:hidden;
-  display:none;
-  z-index:9999;
-}
-#confetti.on{ display:block; }
-
-.confetti-piece{
-  position:absolute;
-  top:-12px;
-  width:10px;
-  height:14px;
-  opacity:.95;
-  border-radius:2px;
-  animation-name: confettiFall;
-  animation-timing-function: linear;
-  animation-iteration-count: 1;
-  will-change: transform, top;
-}
-
-@keyframes confettiFall{
-  0%   { transform: translate3d(0,0,0) rotate(0deg); }
-  100% { transform: translate3d(var(--drift), calc(100vh + 40px), 0) rotate(var(--spin)); }
-}
-
-/* Reduced motion */
-@media (prefers-reduced-motion: reduce){
-  .drive .car{ animation: none; left: 86%; }
-  .crashed .crashFx{ animation:none; opacity:1; }
-  #confetti{ display:none !important; }
-}
 </style>
 </head>
 
 <body>
 
-<div id="rotateHint">
-  📱🔄<br>
-  Bitte drehe dein iPhone<br>
-  <small>(Querformat)</small>
-</div>
-
-<div id="confetti"></div>
-
 <div class="wrap">
-  <div>
-    <h1>HAPPY BIRTHDAY FRANCIS</h1>
-    <button id="startBtn">CLICK ME</button>
-  </div>
+  <h1>HAPPY BIRTHDAY FRANCIS</h1>
+  <button id="startBtn">CLICK ME</button>
 </div>
 
 <div class="modal" id="modal">
@@ -270,96 +182,20 @@ const startBtn = document.getElementById("startBtn");
 const modal = document.getElementById("modal");
 const scene = document.getElementById("scene");
 const gift = document.getElementById("giftText");
-const rotateHint = document.getElementById("rotateHint");
-const confetti = document.getElementById("confetti");
-
-function isIPhone(){
-  return /iPhone/i.test(navigator.userAgent);
-}
-
-function checkOrientation(){
-  if(isIPhone() && window.innerHeight > window.innerWidth){
-    rotateHint.style.display = "grid";
-    startBtn.disabled = true;
-    startBtn.style.opacity = "0.5";
-  }else{
-    rotateHint.style.display = "none";
-    startBtn.disabled = false;
-    startBtn.style.opacity = "";
-  }
-}
-
-function clearConfetti(){
-  confetti.classList.remove("on");
-  confetti.innerHTML = "";
-}
-
-function launchConfetti(){
-  clearConfetti();
-  confetti.classList.add("on");
-
-  const pieces = 120;
-  const colors = ["#ff4d6d","#ffd166","#06d6a0","#4ea8de","#ffffff","#f72585","#b5179e","#00bbf9"];
-  const w = window.innerWidth;
-
-  for(let i=0;i<pieces;i++){
-    const el = document.createElement("div");
-    el.className = "confetti-piece";
-
-    const left = Math.random() * w;
-    const size = 6 + Math.random() * 8;
-    const dur = 1800 + Math.random() * 1400;      // 1.8s - 3.2s
-    const delay = Math.random() * 350;            // slight stagger
-    const drift = (Math.random() * 220 - 110) + "px";
-    const spin = (Math.random() * 720 - 360) + "deg";
-
-    el.style.left = left + "px";
-    el.style.width = size + "px";
-    el.style.height = (size * 1.25) + "px";
-    el.style.background = colors[Math.floor(Math.random() * colors.length)];
-    el.style.animationDuration = dur + "ms";
-    el.style.animationDelay = delay + "ms";
-    el.style.setProperty("--drift", drift);
-    el.style.setProperty("--spin", spin);
-
-    confetti.appendChild(el);
-
-    // cleanup each piece after it falls
-    setTimeout(() => { el.remove(); }, dur + delay + 200);
-  }
-
-  // turn off container after a moment (optional)
-  setTimeout(() => {
-    confetti.classList.remove("on");
-  }, 4200);
-}
 
 function play(){
-  // move title up + hide button
-  document.body.classList.add("started");
-
-  // reset scene
   scene.classList.remove("drive","crashed");
   gift.classList.remove("show");
-  clearConfetti();
   void scene.offsetWidth;
 
-  // show animation
   modal.classList.add("open");
   scene.classList.add("drive");
 
-  // crash + reveal
   setTimeout(()=>scene.classList.add("crashed"), 2550);
-  setTimeout(()=>{
-    gift.classList.add("show");
-    launchConfetti();
-  }, 2900);
+  setTimeout(()=>gift.classList.add("show"), 2900);
 }
 
 startBtn.addEventListener("click", play);
-window.addEventListener("resize", checkOrientation);
-window.addEventListener("orientationchange", checkOrientation);
-checkOrientation();
 </script>
 
 </body>
